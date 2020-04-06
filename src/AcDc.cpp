@@ -11,35 +11,38 @@ int main( int argc, char *argv[] )
     Program program;
     SymbolTable symtab;
 
-    //if( argc == 3){
-    if( true ){
-        source = fopen(argv[1], "r");
-        //fout = fopen(argv[2], "w");
+    if(argc == 3){
+        fout = fopen(argv[2], "w");
+        if( !fout ){
+            printf("can't open the fout file\n");
+            exit(2);
+        }
+    }
+    else{
         fout = stdout;
+    }
+
+    if( argc == 2 ){
+        source = fopen(argv[1], "r");
         if( !source ){
             printf("can't open the source file\n");
             exit(2);
         }
-        else if( !fout ){
-            printf("can't open the fout file\n");
-            exit(2);
-        }
-        else{
-            // Built AST
-            program = parser(source);
-            fclose(source);
-            
-            // Build table
-            symtab = build(program);
 
-            // Check and convertIntToFloat...
-            check(&program, &symtab);
+        // Built AST
+        program = parser(source);
+        fclose(source);
+        
+        // Build table
+        symtab = build(program);
 
-            gencode(program, fout);
-        }
+        // Check and convertIntToFloat...
+        check(&program, &symtab);
+
+        gencode(program, fout);
     }
     else{
-        printf("Usage: %s source_file fout_file\n", argv[0]);
+        printf("Usage: %s source_file [fout_file]\n", argv[0]);
     }
 
 
@@ -262,7 +265,7 @@ Expression *parseExpression( FILE *source, Expression *lvalue )
             (expr->v).type = PlusNode;
             (expr->v).val.op = Plus;
             expr->leftOperand = lvalue;
-            expr->rightOperand = parseValue(source);
+            expr->rightOperand = parseValue(source); // get id, int, float
             return parseExpressionTail(source, expr);
         case MinusOp:
             expr = (Expression *)malloc( sizeof(Expression) );
