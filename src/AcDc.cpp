@@ -45,6 +45,7 @@ int main( int argc, char *argv[] )
         printf("Usage: %s source_file [fout_file]\n", argv[0]);
     }
 
+    fflush(stdout);
 
     return 0;
 }
@@ -143,6 +144,8 @@ Token scanner( FILE *source )
         }
     }
 
+    printf("Token: %c \n", c);
+
     token.tok[0] = '\0';
     token.type = EOFsymbol;
     return token;
@@ -222,6 +225,40 @@ Expression *parseValue( FILE *source )
     return value;
 }
 
+Expression *parseMulDivExpressionTail( FILE *source, Expression *lvalue )
+{
+    Token token = scanner(source);
+    Expression *expr;
+
+    switch(token.type){
+        case MulOp:
+            expr = (Expression *)malloc( sizeof(Expression) );
+            (expr->v).type = MulNode;
+            (expr->v).val.op = Mul;
+            expr->leftOperand = lvalue;
+            expr->rightOperand = parseValue(source);
+            return parseMulDivExpressionTail(source, expr);
+        case DivOp:
+            expr = (Expression *)malloc( sizeof(Expression) );
+            (expr->v).type = DivNode;
+            (expr->v).val.op = Div;
+            expr->leftOperand = lvalue;
+            expr->rightOperand = parseValue(source);
+            return parseMulDivExpressionTail(source, expr);
+        case PlusOp:
+        case MinusOp:
+        case Alphabet:
+        case PrintOp:
+            ungetc(token.tok[0], source);
+            return lvalue;
+        case EOFsymbol:
+            return lvalue;
+        default:
+            printf("Syntax Error: Expect a numeric value or an identifier %s\n", token.tok);
+            exit(1);
+    }
+}
+
 Expression *parseExpressionTail( FILE *source, Expression *lvalue )
 {
     Token token = scanner(source);
@@ -233,14 +270,14 @@ Expression *parseExpressionTail( FILE *source, Expression *lvalue )
             (expr->v).type = PlusNode;
             (expr->v).val.op = Plus;
             expr->leftOperand = lvalue;
-            expr->rightOperand = parseValue(source);
+            expr->rightOperand = parseMulDivExpressionTail( source, parseValue(source) );
             return parseExpressionTail(source, expr);
         case MinusOp:
             expr = (Expression *)malloc( sizeof(Expression) );
             (expr->v).type = MinusNode;
             (expr->v).val.op = Minus;
             expr->leftOperand = lvalue;
-            expr->rightOperand = parseValue(source);
+            expr->rightOperand = parseMulDivExpressionTail( source, parseValue(source) );
             return parseExpressionTail(source, expr);
         case Alphabet:
         case PrintOp:
@@ -265,15 +302,29 @@ Expression *parseExpression( FILE *source, Expression *lvalue )
             (expr->v).type = PlusNode;
             (expr->v).val.op = Plus;
             expr->leftOperand = lvalue;
-            expr->rightOperand = parseValue(source); // get id, int, float
+            expr->rightOperand = parseMulDivExpressionTail( source, parseValue(source) );
             return parseExpressionTail(source, expr);
         case MinusOp:
             expr = (Expression *)malloc( sizeof(Expression) );
             (expr->v).type = MinusNode;
             (expr->v).val.op = Minus;
             expr->leftOperand = lvalue;
-            expr->rightOperand = parseValue(source);
+            expr->rightOperand = parseMulDivExpressionTail( source, parseValue(source) );
             return parseExpressionTail(source, expr);
+        case MulOp:
+            expr = (Expression *)malloc( sizeof(Expression) );
+            (expr->v).type = MulNode;
+            (expr->v).val.op = Mul;
+            expr->leftOperand = lvalue;
+            expr->rightOperand = parseValue(source);
+            return parseExpressionTail( source, parseMulDivExpressionTail(source, expr) );
+        case DivOp:
+            expr = (Expression *)malloc( sizeof(Expression) );
+            (expr->v).type = DivNode;
+            (expr->v).val.op = Div;
+            expr->leftOperand = lvalue;
+            expr->rightOperand = parseValue(source);
+            return parseExpressionTail( source, parseMulDivExpressionTail(source, expr) );
         case Alphabet:
         case PrintOp:
             ungetc(token.tok[0], source);
@@ -584,6 +635,12 @@ void fprint_op( FILE *fout, ValueType op )
         case PlusNode:
             fprintf(fout,"+\n");
             break;
+        case MulNode:
+            fprintf(fout,"*\n");
+            break;
+        case DivNode:
+            fprintf(fout,"/\n");
+            break;
         default:
             fprintf(fout,"Error in fprintf_op ValueType = %d\n",op);
             break;
@@ -615,7 +672,7 @@ void fprint_expr( FILE *fout, Expression *expr)
             fprintf(fout,"5k\n");
         }
         else{
-            //	fprint_right_expr(expr->rightOperand);
+            //fprint_right_expr(expr->rightOperand);
             fprint_expr(fout, expr->rightOperand);
             fprint_op(fout, (expr->v).type);
         }

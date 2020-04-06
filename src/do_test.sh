@@ -1,4 +1,4 @@
 #! /bin/bash
 
-./AcDc $1 > out.txt
-diff out.txt $1.ans
+./AcDc test/sample$1.ac > out.txt
+diff out.txt test/sample$1.ac.ans
