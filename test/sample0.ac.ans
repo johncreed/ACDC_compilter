@@ -1,0 +1,19 @@
+assignment : a 
+constant : float
+assignment : a 
+constant : int
+identifier : a
+generalize : float
+convert to float 3 
+print : a 
+5.500000
+sa
+0 k
+3
+5k
+la
++
+sa
+0 k
+la
+p

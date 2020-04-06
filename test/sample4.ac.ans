@@ -1,0 +1,18 @@
+assignment : a 
+constant : int
+constant : float
+generalize : float
+convert to float 5 
+Error : identifier a is not declared
+assignment : b 
+constant : float
+Error : identifier b is not declared
+5
+5k
+3.200000
++
+sa
+0 k
+3.500000
+sb
+0 k

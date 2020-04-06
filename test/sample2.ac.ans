@@ -1,0 +1,35 @@
+assignment : a 
+constant : int
+assignment : b 
+constant : float
+assignment : c 
+constant : int
+assignment : d 
+constant : int
+assignment : c 
+identifier : a
+identifier : d
+generalize : int
+print : c 
+print : d 
+1
+sa
+0 k
+2.100000
+sb
+0 k
+1
+sc
+0 k
+2
+sd
+0 k
+la
+ld
++
+sc
+0 k
+lc
+p
+ld
+p

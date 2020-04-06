@@ -1,0 +1,28 @@
+assignment : a 
+constant : int
+assignment : c 
+constant : float
+assignment : b 
+identifier : a
+identifier : c
+generalize : float
+convert to float a 
+constant : float
+generalize : float
+print : b 
+1
+sa
+0 k
+1.000000
+sc
+0 k
+la
+5k
+lc
++
+3.200000
++
+sb
+0 k
+lb
+p
