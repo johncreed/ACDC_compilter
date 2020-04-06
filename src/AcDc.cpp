@@ -11,9 +11,11 @@ int main( int argc, char *argv[] )
     Program program;
     SymbolTable symtab;
 
-    if( argc == 3){
+    //if( argc == 3){
+    if( true ){
         source = fopen(argv[1], "r");
-        fout = fopen(argv[2], "w");
+        //fout = fopen(argv[2], "w");
+        fout = stdout;
         if( !source ){
             printf("can't open the source file\n");
             exit(2);
