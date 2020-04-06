@@ -665,16 +665,16 @@ Expression *fold( Expression *expr ){
     if( left != NULL && right == NULL ){
         ValueType l_type = left->v.type;
 
-        assert(expr->v.type == IntToFloatConvertNode && l_type == IntConst );
+        if(expr->v.type == IntToFloatConvertNode && l_type == IntConst ){
+            Value v;
+            v.type = FloatConst;
+            v.val.fvalue = left->v.val.ivalue;
 
-        Value v;
-        v.type = FloatConst;
-        v.val.fvalue = left->v.val.ivalue;
-
-        free(left);
-        expr->v = v;
-        expr->leftOperand = expr->rightOperand = NULL;
-        printf("Implicit convert const Int to Float\n");
+            free(left);
+            expr->v = v;
+            expr->leftOperand = expr->rightOperand = NULL;
+            printf("Implicit convert const Int to Float\n");
+        }
     }
     else if( left != NULL && right != NULL){
         ValueType l_type = left->v.type, r_type = right->v.type;
