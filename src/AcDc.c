@@ -7,31 +7,37 @@
 
 int main( int argc, char *argv[] )
 {
-    FILE *source, *target;
+    FILE *source, *fout;
     Program program;
     SymbolTable symtab;
 
     if( argc == 3){
         source = fopen(argv[1], "r");
-        target = fopen(argv[2], "w");
+        fout = fopen(argv[2], "w");
         if( !source ){
             printf("can't open the source file\n");
             exit(2);
         }
-        else if( !target ){
-            printf("can't open the target file\n");
+        else if( !fout ){
+            printf("can't open the fout file\n");
             exit(2);
         }
         else{
+            // Built AST
             program = parser(source);
             fclose(source);
+            
+            // Build table
             symtab = build(program);
+
+            // Check and convertIntToFloat...
             check(&program, &symtab);
-            gencode(program, target);
+
+            gencode(program, fout);
         }
     }
     else{
-        printf("Usage: %s source_file target_file\n", argv[0]);
+        printf("Usage: %s source_file fout_file\n", argv[0]);
     }
 
 
@@ -284,8 +290,8 @@ Statement parseStatement( FILE *source, Token token )
         case Alphabet:
             next_token = scanner(source);
             if(next_token.type == AssignmentOp){
-                value = parseValue(source);
-                expr = parseExpression(source, value);
+                value = parseValue(source); // get id, int, float
+                expr = parseExpression(source, value); 
                 return makeAssignmentNode(token.tok[0], value, expr);
             }
             else{
@@ -319,7 +325,7 @@ Statements *parseStatements( FILE * source )
         case PrintOp:
             stmt = parseStatement(source, token);
             stmts = parseStatements(source);
-            return makeStatementTree(stmt , stmts);
+            return makeStatementTree(stmt , stmts); // stmt1->stmt2 (linked-list)
         case EOFsymbol:
             return NULL;
         default:
@@ -555,7 +561,7 @@ void check( Program *program, SymbolTable * table )
 {
     Statements *stmts = program->statements;
     while(stmts != NULL){
-        checkstmt(&stmts->first,table);
+        checkstmt(&stmts->first,table); // chech and convertIntToFloat ....
         stmts = stmts->rest;
     }
 }
@@ -564,76 +570,77 @@ void check( Program *program, SymbolTable * table )
 /***********************************************************************
   Code generation
  ************************************************************************/
-void fprint_op( FILE *target, ValueType op )
+void fprint_op( FILE *fout, ValueType op )
 {
     switch(op){
         case MinusNode:
-            fprintf(target,"-\n");
+            fprintf(fout,"-\n");
             break;
         case PlusNode:
-            fprintf(target,"+\n");
+            fprintf(fout,"+\n");
             break;
         default:
-            fprintf(target,"Error in fprintf_op ValueType = %d\n",op);
+            fprintf(fout,"Error in fprintf_op ValueType = %d\n",op);
             break;
     }
 }
 
-void fprint_expr( FILE *target, Expression *expr)
+void fprint_expr( FILE *fout, Expression *expr)
 {
 
     if(expr->leftOperand == NULL){
         switch( (expr->v).type ){
             case Identifier:
-                fprintf(target,"l%c\n",(expr->v).val.id);
+                fprintf(fout,"l%c\n",(expr->v).val.id);
                 break;
             case IntConst:
-                fprintf(target,"%d\n",(expr->v).val.ivalue);
+                fprintf(fout,"%d\n",(expr->v).val.ivalue);
                 break;
             case FloatConst:
-                fprintf(target,"%f\n", (expr->v).val.fvalue);
+                fprintf(fout,"%f\n", (expr->v).val.fvalue);
                 break;
             default:
-                fprintf(target,"Error In fprint_left_expr. (expr->v).type=%d\n",(expr->v).type);
+                fprintf(fout,"Error In fprint_left_expr. (expr->v).type=%d\n",(expr->v).type);
                 break;
         }
     }
     else{
-        fprint_expr(target, expr->leftOperand);
+        fprint_expr(fout, expr->leftOperand);
         if(expr->rightOperand == NULL){
-            fprintf(target,"5k\n");
+            fprintf(fout,"5k\n");
         }
         else{
             //	fprint_right_expr(expr->rightOperand);
-            fprint_expr(target, expr->rightOperand);
-            fprint_op(target, (expr->v).type);
+            fprint_expr(fout, expr->rightOperand);
+            fprint_op(fout, (expr->v).type);
         }
     }
 }
 
-void gencode(Program prog, FILE * target)
+void gencode(Program prog, FILE * fout)
 {
     Statements *stmts = prog.statements;
     Statement stmt;
 
+    // Iterate all statements
     while(stmts != NULL){
         stmt = stmts->first;
         switch(stmt.type){
             case Print:
-                fprintf(target,"l%c\n",stmt.stmt.variable);
-                fprintf(target,"p\n");
+                fprintf(fout,"l%c\n",stmt.stmt.variable);
+                fprintf(fout,"p\n");
                 break;
             case Assignment:
-                fprint_expr(target, stmt.stmt.assign.expr);
+                fprint_expr(fout, stmt.stmt.assign.expr);
                 /*
                    if(stmt.stmt.assign.type == Int){
-                   fprintf(target,"0 k\n");
+                   fprintf(fout,"0 k\n");
                    }
                    else if(stmt.stmt.assign.type == Float){
-                   fprintf(target,"5 k\n");
+                   fprintf(fout,"5 k\n");
                    }*/
-                fprintf(target,"s%c\n",stmt.stmt.assign.id);
-                fprintf(target,"0 k\n");
+                fprintf(fout,"s%c\n",stmt.stmt.assign.id);
+                fprintf(fout,"0 k\n");
                 break;
         }
         stmts=stmts->rest;

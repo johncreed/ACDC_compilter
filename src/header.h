@@ -70,7 +70,7 @@ typedef struct Value{
    in data structure course.   
 */
 typedef struct Expression{
-    Value v;
+    Value v;  // id, op, ivalue, fvalue;
     struct Expression *leftOperand;
     struct Expression *rightOperand;
     DataType type;
@@ -138,7 +138,7 @@ void checkstmt( Statement *stmt, SymbolTable * table );
 void check( Program *program, SymbolTable * table);
 void fprint_op( FILE *target, ValueType op );
 void fprint_expr( FILE *target, Expression *expr );
-void gencode( Program prog, FILE * target );
+void gencode( Program prog, FILE * fout );
 
 void print_expr( Expression *expr );
 void test_parser( FILE *source );
