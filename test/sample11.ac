@@ -1,0 +1,10 @@
+f aa
+f bb
+f cc
+f p
+
+ccc = aa + bb
+cc = aa - bb
+cc = aa * bb
+cc = aa / bb
+p aa 

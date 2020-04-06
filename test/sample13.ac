@@ -1,0 +1,7 @@
+f aaa
+i bbb
+
+aaa =  5 / 2 
+aaa =  5 / 2.0
+aaa =  5.0 / 2  
+aaa = 5 / 2 + 10 + aaa * bbb + aaa / bbb 
