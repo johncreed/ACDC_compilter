@@ -1,0 +1,4 @@
+f aaa
+i bbb
+
+aaa = aaa + bbb + 1.0 * 3 * 4 * bbb + aaa
