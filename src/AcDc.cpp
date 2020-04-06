@@ -839,7 +839,7 @@ void fprint_expr( FILE *fout, Expression *expr)
     else{
         fprint_expr(fout, expr->leftOperand);
         if(expr->rightOperand == NULL){
-            fprintf(fout,"5k\n");
+            fprintf(fout,"5 k\n");
         }
         else{
             fprint_expr(fout, expr->rightOperand);
