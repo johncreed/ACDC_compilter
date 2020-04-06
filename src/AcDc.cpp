@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <assert.h>
 #include "header.h"
-
 
 int main( int argc, char *argv[] )
 {
@@ -593,12 +593,114 @@ void checkexpression( Expression * expr, SymbolTable * table )
     }
 }
 
+Value merge_const_val( Operation op, Value &lhs, Value &rhs ){
+    assert( lhs.type == rhs.type );
+    Value v;
+    v.type = lhs.type;
+
+    if( v.type == IntConst ){
+        int lval = lhs.val.ivalue, rval = rhs.val.ivalue;
+        switch(op){
+            case Minus:
+                v.val.ivalue = lval - rval;
+                printf("Fold %d - %d\n", lval, rval);
+                break;
+            case Plus:
+                v.val.ivalue = lval + rval;
+                printf("Fold %d + %d\n", lval, rval);
+                break;
+            case Mul:
+                v.val.ivalue = lval * rval;
+                printf("Fold %d * %d\n", lval, rval);
+                break;
+            case Div:
+                v.val.ivalue = lval / rval;
+                printf("Fold %d / %d\n", lval, rval);
+                break;
+            default:
+                printf("Error in folding = %d\n",op);
+                exit(1);
+                break;
+        }
+    }
+    else{
+        float lval = lhs.val.fvalue, rval = rhs.val.fvalue;
+        switch(op){
+            case Minus:
+                v.val.fvalue = lval - rval;
+                printf("Fold %.6f - %.6f\n", lval, rval);
+                break;
+            case Plus:
+                v.val.fvalue = lval + rval;
+                printf("Fold %.6f + %.6f\n", lval, rval);
+                break;
+            case Mul:
+                v.val.fvalue = lval * rval;
+                printf("Fold %.6f * %.6f\n", lval, rval);
+                break;
+            case Div:
+                v.val.fvalue = lval / rval;
+                printf("Fold %.6f / %.6f\n", lval, rval);
+                break;
+            default:
+                printf("Error in folding = %d\n",op);
+                exit(1);
+                break;
+        }
+    }
+
+    return v;
+}
+
+Expression *fold( Expression *expr ){
+    if(expr == NULL)
+        return NULL;
+
+    if(expr->leftOperand == NULL && expr->rightOperand == NULL)
+        return expr;
+
+    Expression *left = fold( expr->leftOperand );
+    Expression *right = fold( expr->rightOperand );
+   
+    if( left != NULL && right == NULL ){
+        ValueType l_type = left->v.type;
+
+        assert(expr->v.type == IntToFloatConvertNode && l_type == IntConst );
+
+        Value v;
+        v.type = FloatConst;
+        v.val.fvalue = left->v.val.ivalue;
+
+        free(left);
+        expr->v = v;
+        expr->leftOperand = expr->rightOperand = NULL;
+        printf("Implicit convert const Int to Float\n");
+    }
+    else if( left != NULL && right != NULL){
+        ValueType l_type = left->v.type, r_type = right->v.type;
+
+        if( (l_type == IntConst || l_type == FloatConst) && (r_type == IntConst || r_type == FloatConst) ){
+            assert( l_type == r_type );
+            
+            Value v = merge_const_val( expr->v.val.op, left->v, right->v );
+            free( left );
+            free( right );
+            expr->leftOperand = expr->rightOperand = NULL;
+            expr->v = v;
+        }
+    }
+
+
+    return expr;
+}
+
 void checkstmt( Statement *stmt, SymbolTable * table )
 {
     if(stmt->type == Assignment){
         AssignmentStatement assign = stmt->stmt.assign;
         printf("assignment : %c \n",assign.id);
         checkexpression(assign.expr, table);
+        assign.expr = fold( assign.expr );
         stmt->stmt.assign.type = lookup_table(table, assign.id);
         if (assign.expr->type == Float && stmt->stmt.assign.type == Int) {
             printf("error : can't convert float to integer\n");
@@ -672,7 +774,6 @@ void fprint_expr( FILE *fout, Expression *expr)
             fprintf(fout,"5k\n");
         }
         else{
-            //fprint_right_expr(expr->rightOperand);
             fprint_expr(fout, expr->rightOperand);
             fprint_op(fout, (expr->v).type);
         }
